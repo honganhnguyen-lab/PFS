@@ -5,6 +5,8 @@ const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 
+const client = require("twilio")(process.env.ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+
 const signToken = id => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN
@@ -47,14 +49,14 @@ exports.signup = catchAsync(async (req, res, next) => {
 });
 
 exports.login = catchAsync(async (req, res, next) => {
-  const { email, password } = req.body;
+  const { phoneNumber, password } = req.body;
 
   // 1) Check if email and password exist
-  if (!email || !password) {
-    return next(new AppError('Please provide email and password!', 400));
+  if (!phoneNumber || !password) {
+    return next(new AppError('Please provide phoneNumber and password!', 400));
   }
   // 2) Check if user exists && password is correct
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ phoneNumber }).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
@@ -105,6 +107,41 @@ exports.protect = catchAsync(async (req, res, next) => {
   req.user = currentUser;
   next();
 });
+
+exports.sendOtp = (req, res, next) => {
+  client.verify.v2
+  .services(process.env.VERIFY_SID)
+  .verifications.create({ to: `+${req.body.phoneNumber}`, channel: "sms" })
+    .then((data) => {
+      res.status(200).json({
+      status:"success"
+      })
+      .catch(() => {
+        return next(
+          new AppError('Cannot send OTP, please try again', 500)
+        );
+      })
+  })
+
+}
+
+exports.verifyOtp = (req, res, next) => {
+  client.verify.v2
+  .services(process.env.VERIFY_SID)
+  .verificationChecks.create({ to: `+${req.body.phoneNumber}`, code: `${req.body.code}`,validity_period: 60})
+    .then((data) => {
+      console.log('data',data)
+      res.status(200).json({
+        status:"success"
+      })
+    })
+    .catch((error) => {
+      return next(
+      new AppError('Wrong otp code', 400)
+      );
+    });
+
+}
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
