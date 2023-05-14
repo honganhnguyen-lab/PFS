@@ -5,7 +5,7 @@ const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 
-const client = require("twilio")(process.env.ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+
 
 const signToken = id => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -44,14 +44,24 @@ exports.signup = catchAsync(async (req, res, next) => {
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm
   });
-
-  createSendToken(newUser, 201, res);
+    
+  res.status(200).json({
+    status: 'success',
+    data: {
+      newUser
+    }
+  });
+    if (!newUser) {
+    return next(
+      new AppError('Cannot signup new account', 500)
+    );
+  }
 });
 
 exports.login = catchAsync(async (req, res, next) => {
   const { phoneNumber, password } = req.body;
 
-  // 1) Check if email and password exist
+  // 1) Check if phoneNumber and password exist
   if (!phoneNumber || !password) {
     return next(new AppError('Please provide phoneNumber and password!', 400));
   }
@@ -59,7 +69,7 @@ exports.login = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ phoneNumber }).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return next(new AppError('Incorrect email or password', 401));
+    return next(new AppError('Incorrect phoneNumber or password', 401));
   }
 
   // 3) If everything ok, send token to client
@@ -108,44 +118,48 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-exports.sendOtp = (req, res, next) => {
+exports.sendOtp = catchAsync(async (req, res, next) => {
+  const { phoneNumber } = req.body;
+  const formattedPhoneNumber = '+84' + phoneNumber.replace(/^0/, '');
+  const client = require("twilio")(process.env.ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
   client.verify.v2
   .services(process.env.VERIFY_SID)
-  .verifications.create({ to: `+${req.body.phoneNumber}`, channel: "sms" })
-    .then((data) => {
+  .verifications.create({ to: formattedPhoneNumber, channel: "sms"})
+    .then((veri) => {
+      console.log('very', veri.sid)
       res.status(200).json({
-      status:"success"
-      })
-      .catch(() => {
-        return next(
-          new AppError('Cannot send OTP, please try again', 500)
-        );
-      })
+      status: 'success',
+  });
+    }).catch((err) => {
+    console.log(err)
   })
 
-}
+})
 
-exports.verifyOtp = (req, res, next) => {
-  client.verify.v2
-  .services(process.env.VERIFY_SID)
-  .verificationChecks.create({ to: `+${req.body.phoneNumber}`, code: `${req.body.code}`,validity_period: 60})
-    .then((data) => {
-      console.log('data',data)
-      res.status(200).json({
-        status:"success"
+exports.verifyOtp = catchAsync(async (req, res, next) => {
+  const { phoneNumber, code } = req.body;
+  const formattedPhoneNumber = '+84' + phoneNumber.replace(/^0/, '');
+  const client = require("twilio")(process.env.ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  client.verify.v2.services(process.env.VERIFY_SID)
+      .verificationChecks
+      .create({to: formattedPhoneNumber, code})
+      .then(verification_check => {
+        res.status(200).json({
+        status: 'success',
+        });
       })
-    })
-    .catch((error) => {
-      return next(
-      new AppError('Wrong otp code', 400)
+      .catch(err => {
+        return next(
+        new AppError('Wrong formatted code', 400)
       );
-    });
+      })
+   
 
-}
+
+})
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    // roles ['admin', 'lead-guide']. role='user'
     if (!roles.includes(req.user.role)) {
       return next(
         new AppError('You do not have permission to perform this action', 403)
