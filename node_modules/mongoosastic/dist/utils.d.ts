@@ -1,0 +1,11 @@
+import { ApiResponse } from '@elastic/elasticsearch';
+import { MappingProperty, PropertyName, SearchResponse } from '@elastic/elasticsearch/api/types';
+import { DeleteByIdOptions, EsSearchOptions, GeneratedMapping, HydratedSearchResults, MongoosasticDocument, MongoosasticModel } from './types';
+export declare function isString(subject: unknown): boolean;
+export declare function isStringArray(arr: Array<unknown>): boolean;
+export declare function getIndexName(doc: MongoosasticDocument | MongoosasticModel<MongoosasticDocument>): string;
+export declare function filterMappingFromMixed(props: Record<PropertyName, MappingProperty>): Record<PropertyName, MappingProperty>;
+export declare function serialize<T extends MongoosasticDocument>(model: T, mapping: GeneratedMapping): T | T[] | string;
+export declare function deleteById(document: MongoosasticDocument, opt: DeleteByIdOptions): Promise<void>;
+export declare function reformatESTotalNumber<T = unknown>(res: ApiResponse<SearchResponse<T>>): ApiResponse<SearchResponse<T>>;
+export declare function hydrate(res: ApiResponse<SearchResponse>, model: MongoosasticModel<MongoosasticDocument>, opts: EsSearchOptions): Promise<ApiResponse<HydratedSearchResults>>;

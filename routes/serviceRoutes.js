@@ -7,17 +7,21 @@ const router = express.Router();
 
 router
   .route('/')
-  .get(authController.protect, serviceController.getAllServices)
-  .post(serviceController.createService);
+  .get(serviceController.getAllServices)
+  .post(authController.protect, serviceController.createService);
 
 router
   .route('/:id')
   .get(serviceController.getService)
-  .patch(serviceController.updateService)
+  .patch(
+    authController.protect,
+    authController.restrictTo('admin'),
+    serviceController.updateService)
   .delete(
     authController.protect,
     authController.restrictTo('admin'),
     serviceController.deleteService
-  );
+);
+
 
 module.exports = router;

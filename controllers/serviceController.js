@@ -36,7 +36,7 @@ exports.getService = catchAsync(async (req, res, next) => {
   });
 })
 exports.createService = catchAsync(async (req, res, next) => {
-  const newService = await Service.create(req.body);
+  const newService = await Service.create({ ...req.body });
 
   res.status(201).json({
     status: 'success',
@@ -76,3 +76,16 @@ exports.deleteService = catchAsync(async (req, res, next) => {
     data: null
   });
 });
+
+exports.getServiceByProvider = catchAsync(async (req, res, next) => {
+  const service = await Service.find({ providerId: req.params.id })
+
+  if (!service) {
+    return next(new AppError('No service found with that ID', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: { service }
+  });
+})

@@ -1,0 +1,1 @@
+{"version":3,"file":"esClient.js","sourceRoot":"","sources":["../lib/esClient.ts"],"names":[],"mappings":";;;AAAA,0DAA+C;AAG/C,SAAgB,cAAc,CAAC,OAAgB;IAC7C,IAAI,OAAO,CAAC,aAAa,EAAE;QACzB,OAAO,IAAI,sBAAM,CAAC,OAAO,CAAC,aAAa,CAAC,CAAA;KACzC;SAAM;QACL,OAAO,IAAI,sBAAM,CAAC,EAAE,IAAI,EAAE,uBAAuB,EAAE,CAAC,CAAA;KACrD;AACH,CAAC;AAND,wCAMC"}

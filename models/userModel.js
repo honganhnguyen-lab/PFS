@@ -51,17 +51,21 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
     select: false
+  },
+  appointmentNumber: Number,
+  description: String,
+  category: {
+    type: Array,
+    required: function() {
+      return this.role === 'provider';
+    }
   }
 });
 
 userSchema.pre('save', async function(next) {
-  // Only run this function if password was actually modified
   if (!this.isModified('password')) return next();
 
-  // Hash the password with cost of 12
   this.password = await bcrypt.hash(this.password, 12);
-
-  // Delete passwordConfirm field
   this.passwordConfirm = undefined;
   next();
 });
@@ -72,12 +76,6 @@ userSchema.pre('save', function(next) {
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });
-
-// userSchema.pre(/^find/, function(next) {
-//   // this points to the current query
-//   this.find({ active: { $ne: false } });
-//   next();
-// });
 
 userSchema.methods.correctPassword = async function(
   candidatePassword,
@@ -108,12 +106,20 @@ userSchema.methods.createPasswordResetToken = function() {
     .update(resetToken)
     .digest('hex');
 
-  console.log({ resetToken }, this.passwordResetToken);
-
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
   return resetToken;
 };
+
+userSchema.pre('save', function (next) {
+  const providerRequiredField = ['category', 'description', 'services']
+  if (this.role === 'provider' && !this.category) {
+    const error = new Error('Admin field is required.');
+    return next(error);
+  }
+  
+  next();
+});
 
 const User = mongoose.model('User', userSchema);
 

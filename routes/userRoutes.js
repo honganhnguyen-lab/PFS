@@ -1,6 +1,7 @@
 const express = require('express');
 const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
+const serviceController = require('../controllers/serviceController');
 
 const router = express.Router();
 
@@ -24,5 +25,12 @@ router
   .get(userController.getUser)
   .patch(userController.updateUser)
   .delete(userController.deleteUser);
+
+router
+  .route('/:id/services')
+  .get(
+    authController.protect,
+    authController.restrictTo('provider'),
+    serviceController.getServiceByProvider)
 
 module.exports = router;
