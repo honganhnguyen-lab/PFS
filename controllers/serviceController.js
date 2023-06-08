@@ -2,23 +2,66 @@ const Service = require('../models/serviceModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
+const esClient = require('../elasticSearch');
 
 exports.getAllServices = catchAsync(async (req, res, next) => {
-    const features = new APIFeatures(Service.find(), req.query)
-        .filter()
-        .sort()
-        .limitFields()
-        .paginate();
-    const services = await features.query;
+  const reqTextSearch = req.query.search ? req.query.search : ''
+  const reqGeolocation = req.query.sortGeo;
+  const reqRating = req.query.sortRating;
+  const reqPrice = req.query.sortPrice;
+  const reqCategory = Number(req.query.category);
+  const reqDiscount = req.query.isDiscount;
 
-    // SEND RESPONSE
-    res.status(200).json({
-        status: 'success',
-        results: services.length,
-        data: {
-            services
-        }
-    });
+  let queryBody = {
+    size: 300,
+    query: {
+    bool: {
+      should: [
+        {
+          multi_match: {
+            query: reqTextSearch,
+            zero_terms_query: 'all',
+            type: 'best_fields',
+            operator: 'and',
+            fields: ['title', 'description', 'serviceName', 'phoneNumber']
+          }
+        },
+      ],
+    }
+    },
+    sort: [
+      {
+        ratingsAverage: reqRating,
+        price: reqPrice
+      }
+    ],
+};
+
+if (reqCategory) {
+  queryBody.query.bool.filter = [
+    {
+      term: {
+        category: reqCategory
+      }
+    }
+  ];
+}
+  if (reqDiscount) {
+   queryBody.query.bool.filter = [
+    {
+      term: {
+        isDiscount: reqDiscount
+      }
+    }
+  ];
+}
+
+  const apiResult = await esClient.search({
+    index: 'search-family-services',
+    body: queryBody
+  })
+
+  res.json(apiResult.hits.hits);
 });
 
 exports.getService = catchAsync(async (req, res, next) => {

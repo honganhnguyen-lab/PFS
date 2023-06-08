@@ -15,11 +15,11 @@ router
   .get(serviceController.getService)
   .patch(
     authController.protect,
-    authController.restrictTo('admin'),
+    authController.restrictTo('provider'),
     serviceController.updateService)
   .delete(
     authController.protect,
-    authController.restrictTo('admin'),
+    authController.restrictTo('provider'),
     serviceController.deleteService
 );
 
