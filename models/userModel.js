@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const Service = require('./serviceModel');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -60,7 +61,11 @@ const userSchema = new mongoose.Schema({
       return this.role === 'provider';
     }
   }
-});
+},
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+  });
 
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
@@ -120,6 +125,21 @@ userSchema.pre('save', function (next) {
   
   next();
 });
+
+//Virtual populate
+userSchema.virtual('services', {
+  ref: 'Service',
+  foreignField: 'providerId',
+  localField: '_id'
+});
+
+userSchema.virtual('appointments', {
+  ref: 'Appointment',
+  foreignField: 'providerId',
+  localField: '_id'
+});
+
+
 
 const User = mongoose.model('User', userSchema);
 

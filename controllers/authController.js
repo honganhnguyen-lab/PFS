@@ -60,7 +60,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { phoneNumber, password } = req.body;
-
+  console.log('phoneN', phoneNumber, password)
   // 1) Check if phoneNumber and password exist
   if (!phoneNumber || !password) {
     return next(new AppError('Please provide phoneNumber and password!', 400));

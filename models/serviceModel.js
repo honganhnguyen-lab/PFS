@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
-const mongoosastic = require('mongoosastic');
-const ElasticClient = require('../elasticSearch');
 
 const defineCategory = {
   'repairServices': 0,
@@ -34,11 +32,10 @@ const serviceSchema = new mongoose.Schema(
       type: String
     },
     category: {
-      type: String,
-      required: [true, 'A service must have a category'],
+      type: Number,
+      // required: [true, 'A service must have a category'],
       enum: {
         values: [defineCategory.cleanServices, defineCategory.maidServices, defineCategory.repairServices, defineCategory.tutorServices],
-        message: 'Service type is either: repairServices, maidServices, cleanServices, tutorServices'
       },
     },
     ratingsAverage: {
@@ -58,6 +55,16 @@ const serviceSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    location: {
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point']
+      },
+      coordinates: [Number],
+      address: String,
+      description: String
+    },
     createdAt: {
       type: Date,
       default: Date.now(),
@@ -73,13 +80,16 @@ const serviceSchema = new mongoose.Schema(
 
 serviceSchema.pre('save', function (next) {
   this.slug = slugify(this.title, { lower: true });
-  console.log('priceDiscount', this.priceDiscount)
   this.isDiscount = this.priceDiscount ? true : false
   next();
 });
 
-serviceSchema.pre('find', function (next) { 
-  this.populate("providerId")
+serviceSchema.pre(/^find/, function(next) {
+  this.populate({
+    path: 'providerId',
+    select: '-__v -passwordChangedAt'
+  });
+
   next();
 });
 

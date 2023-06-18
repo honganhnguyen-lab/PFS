@@ -6,11 +6,12 @@ const esClient = require('../elasticSearch');
 
 exports.getAllServices = catchAsync(async (req, res, next) => {
   const reqTextSearch = req.query.search ? req.query.search : ''
-  const reqGeolocation = req.query.sortGeo;
+  const isSortByLocation = req.query.isGeo;
   const reqRating = req.query.sortRating;
   const reqPrice = req.query.sortPrice;
   const reqCategory = Number(req.query.category);
   const reqDiscount = req.query.isDiscount;
+ 
 
   let queryBody = {
     size: 300,
@@ -34,7 +35,7 @@ exports.getAllServices = catchAsync(async (req, res, next) => {
         ratingsAverage: reqRating,
         price: reqPrice
       }
-    ],
+    ]
 };
 
 if (reqCategory) {
@@ -54,12 +55,26 @@ if (reqCategory) {
       }
     }
   ];
-}
+  }
+  // if (isSortByLocation) {
+  //   queryBody.query.bool.filter = [
+  //     {
+  //       geo_distance: {
+  //         distance: 200km,
+  //         "pin.location": {
+  //           "lat": 40,
+  //           "lon": -70
+  //         }
+  //       }
+  //     }
+  //   ] 
+  // }
 
   const apiResult = await esClient.search({
     index: 'search-family-services',
     body: queryBody
-  })
+  }
+  )
 
   res.json(apiResult.hits.hits);
 });
@@ -79,7 +94,14 @@ exports.getService = catchAsync(async (req, res, next) => {
   });
 })
 exports.createService = catchAsync(async (req, res, next) => {
-  const newService = await Service.create({ ...req.body });
+  const newService = (await Service.create({ ...req.body })).populate({
+    path: 'providerId',
+    select: '-__v -passwordChangedAt'
+  });
+
+    if (!newService) {
+    return next(new AppError('Add new service fail', 400));
+  }
 
   res.status(201).json({
     status: 'success',

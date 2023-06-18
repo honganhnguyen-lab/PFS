@@ -61,7 +61,7 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
 });
 
 exports.getUser = catchAsync(async (req, res) => {
-  const user= await User.findById(req.params.id);
+  const user= await User.findById(req.params.id).populate('services');
 
   if (!user) {
     return next(new AppError('No service found with that ID', 404));
