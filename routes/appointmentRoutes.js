@@ -1,16 +1,24 @@
-const express = require('express');
-const AppointmentController = require('../controllers/appoinmentController');
-const authController = require('../controllers/authController');
+const express = require("express");
+const AppointmentController = require("../controllers/appoinmentController");
+const authController = require("../controllers/authController");
 
 const router = express.Router();
 
 router
-  .route('/')
+  .route("/")
   .post(AppointmentController.createAppoinment)
+  .get(AppointmentController.getAppointments);
 
 router
-  .route('/:id')
-  .get(AppointmentController.getAppointment)
-;
-
+  .route("/:id")
+  .patch(
+    authController.protect,
+    authController.restrictTo("provider"),
+    AppointmentController.updateAppointment
+  )
+  .delete(
+    authController.protect,
+    authController.restrictTo("provider"),
+    AppointmentController.deleteAppointment
+  );
 module.exports = router;

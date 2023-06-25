@@ -1,55 +1,66 @@
-const mongoose = require('mongoose');
-const slugify = require('slugify');
+const mongoose = require("mongoose");
+const slugify = require("slugify");
 
 const defineCategory = {
-  'repairServices': 0,
-  'maidServices': 1,
-  'cleanServices': 2,
-  'tutorServices': 3
-}
+  repairServices: 0,
+  maidServices: 1,
+  cleanServices: 2,
+  tutorServices: 3
+};
 
 const serviceSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, 'A service must have a title'],
+      required: [true, "A service must have a title"],
       unique: true,
       trim: true,
-      maxlength: [40, 'A service title must have less or equal then 40 characters'],
-      minlength: [10, 'A service title must have more or equal then 10 characters'],
+      maxlength: [
+        40,
+        "A service title must have less or equal then 40 characters"
+      ],
+      minlength: [
+        10,
+        "A service title must have more or equal then 10 characters"
+      ]
     },
     slug: String,
     description: {
       type: String,
-      required: [true, 'A service must have a description'],
+      required: [true, "A service must have a description"]
     },
     providerId: {
       type: mongoose.Schema.ObjectId,
-      ref: 'User',
-      required: [true, 'A service must have its provider']
+      ref: "User",
+      required: [true, "A service must have its provider"]
     },
     picture: {
       type: String
     },
     category: {
-      type: Number,
-      // required: [true, 'A service must have a category'],
+      type: [Number],
+      required: [true, "A service must have a category"],
       enum: {
-        values: [defineCategory.cleanServices, defineCategory.maidServices, defineCategory.repairServices, defineCategory.tutorServices],
-      },
+        values: [
+          defineCategory.cleanServices,
+          defineCategory.maidServices,
+          defineCategory.repairServices,
+          defineCategory.tutorServices
+        ]
+      }
     },
     ratingsAverage: {
       type: Number,
       default: 4.5,
-      min: [1, 'Rating must be above 1.0'],
-      max: [5, 'Rating must be below 5.0'],
+      min: [1, "Rating must be above 1.0"],
+      max: [5, "Rating must be below 5.0"]
     },
     price: {
       type: Number,
-      required: [true, 'A tour must have a price']
+      required: [true, "A tour must have a price"]
     },
     priceDiscount: {
-      type: Number,
+      type: Number
     },
     isDiscount: {
       type: Boolean,
@@ -58,8 +69,8 @@ const serviceSchema = new mongoose.Schema(
     location: {
       type: {
         type: String,
-        default: 'Point',
-        enum: ['Point']
+        default: "Point",
+        enum: ["Point"]
       },
       coordinates: [Number],
       address: String,
@@ -77,25 +88,21 @@ const serviceSchema = new mongoose.Schema(
   }
 );
 
-
-serviceSchema.pre('save', function (next) {
+serviceSchema.pre("save", function (next) {
   this.slug = slugify(this.title, { lower: true });
-  this.isDiscount = this.priceDiscount ? true : false
+  this.isDiscount = this.priceDiscount ? true : false;
   next();
 });
 
-serviceSchema.pre(/^find/, function(next) {
+serviceSchema.pre(/^find/, function (next) {
   this.populate({
-    path: 'providerId',
-    select: '-__v -passwordChangedAt'
+    path: "providerId",
+    select: "-__v -passwordChangedAt"
   });
 
   next();
 });
 
-
-
-const Service = mongoose.model('Service', serviceSchema)
-
+const Service = mongoose.model("Service", serviceSchema);
 
 module.exports = Service;

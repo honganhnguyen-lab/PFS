@@ -1,27 +1,28 @@
-const express = require('express');
-const serviceController = require('../controllers/serviceController');
-const authController = require('../controllers/authController');
+const express = require("express");
+const serviceController = require("../controllers/serviceController");
+const authController = require("../controllers/authController");
 
 const router = express.Router();
 
-
 router
-  .route('/')
-  .get(serviceController.getAllServices)
+  .route("/")
+  .get(serviceController.getAllService)
   .post(authController.protect, serviceController.createService);
 
+router.route("/elastic").get(serviceController.getAllServicesByElastic);
+
 router
-  .route('/:id')
+  .route("/:id")
   .get(serviceController.getService)
   .patch(
     authController.protect,
-    authController.restrictTo('provider'),
-    serviceController.updateService)
+    authController.restrictTo("provider"),
+    serviceController.updateService
+  )
   .delete(
     authController.protect,
-    authController.restrictTo('provider'),
+    authController.restrictTo("provider"),
     serviceController.deleteService
-);
-
+  );
 
 module.exports = router;
