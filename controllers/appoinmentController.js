@@ -12,7 +12,7 @@ exports.createAppoinment = catchAsync(async (req, res, next) => {
   res.status(201).json({
     status: "success",
     data: {
-      service: newAppointment
+      newAppointment
     }
   });
 });
@@ -63,15 +63,29 @@ exports.deleteAppointment = catchAsync(async (req, res, next) => {
   });
 });
 
-// exports.get = catchAsync(async (req, res, next) => {
-//   const service = await Service.find({ providerId: req.params.id });
+exports.getAppointmentByProvider = catchAsync(async (req, res, next) => {
+  console.log("id", req.params.id);
+  const appointment = await Appointment.find({ providerId: req.params.id });
 
-//   if (!service) {
-//     return next(new AppError("No service found with that ID", 404));
-//   }
+  if (!appointment) {
+    return next(new AppError("No service found with that ID", 404));
+  }
 
-//   res.status(200).json({
-//     status: "success",
-//     data: { service }
-//   });
-// });
+  res.status(200).json({
+    status: "success",
+    data: { appointment }
+  });
+});
+
+exports.getAppointmentByCustomer = catchAsync(async (req, res, next) => {
+  console.log("id", req.params.id);
+
+  const appointment = await Appointment.find({ userId: req.params.id });
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      appointment
+    }
+  });
+});

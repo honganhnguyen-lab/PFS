@@ -6,6 +6,7 @@ const esClient = require("../elasticSearch");
 
 exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
   const reqTextSearch = req.query.search ? req.query.search : "";
+
   const isSortByLocation = req.query.isGeo;
   const reqRating = req.query.sortRating;
   const reqPrice = req.query.sortPrice;
@@ -14,6 +15,7 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
 
   let queryBody = {
     size: 300,
+    _source: true,
     query: {
       bool: {
         should: [
@@ -23,7 +25,7 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
               zero_terms_query: "all",
               type: "best_fields",
               operator: "and",
-              fields: ["title", "description", "serviceName", "phoneNumber"]
+              fields: ["title", "description", "phoneNumber"]
             }
           }
         ]
@@ -31,8 +33,8 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
     },
     sort: [
       {
-        ratingsAverage: reqRating,
-        price: reqPrice
+        ratingsAverage: reqRating && "desc",
+        price: reqPrice && "desc"
       }
     ]
   };
@@ -70,7 +72,7 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
   // }
 
   const apiResult = await esClient.search({
-    index: "search-family-services",
+    index: "search-services",
     body: queryBody
   });
 
@@ -155,6 +157,7 @@ exports.deleteService = catchAsync(async (req, res, next) => {
 
 exports.getServiceByProvider = catchAsync(async (req, res, next) => {
   const service = await Service.find({ providerId: req.params.id });
+  console.log("services", service, req.params.id);
 
   if (!service) {
     return next(new AppError("No service found with that ID", 404));

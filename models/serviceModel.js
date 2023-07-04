@@ -38,7 +38,7 @@ const serviceSchema = new mongoose.Schema(
       type: String
     },
     category: {
-      type: [Number],
+      type: Number,
       required: [true, "A service must have a category"],
       enum: {
         values: [

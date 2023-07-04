@@ -1,9 +1,12 @@
+const moment = require("moment");
 const mongoose = require("mongoose");
 
 const defineStatus = {
   pending: 0,
   confirm: 1,
-  reject: 2
+  reject: 2,
+  processing: 3,
+  done: 4
 };
 
 const appointmentSchema = new mongoose.Schema(
@@ -41,7 +44,7 @@ const appointmentSchema = new mongoose.Schema(
       },
       coordinates: [Number]
     },
-    appoinmentDate: {
+    appointmentDate: {
       type: String,
       required: [true, "An appointment must has date"]
     },
@@ -85,7 +88,22 @@ appointmentSchema.pre("save", function (next) {
   next();
 });
 
-appointmentSchema.pre(/^find/, function (next) {
+appointmentSchema.pre(/^find/, async function (next) {
+  const currentDate = moment().startOf("day");
+  const appointmentDate = moment(this.getQuery().appointmentDate, "YYYY/MM/DD");
+  console.log(currentDate, appointmentDate);
+  if (appointmentDate.isSame(currentDate, "day")) {
+    try {
+      await Appointment.updateMany(
+        { _id: { $in: this.getQuery()._id } },
+        { $set: { status: defineStatus.processing } }
+      );
+      console.log("Appointment status updated successfully");
+    } catch (err) {
+      console.error("Error updating appointment status:", err);
+    }
+  }
+
   this.populate({
     path: "userId"
   })

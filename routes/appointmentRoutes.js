@@ -21,4 +21,12 @@ router
     authController.restrictTo("provider"),
     AppointmentController.deleteAppointment
   );
+
+router
+  .route("/customer/:id")
+  .get(AppointmentController.getAppointmentByCustomer);
+
+router
+  .route("/provider/:id")
+  .get(AppointmentController.getAppointmentByProvider);
 module.exports = router;
