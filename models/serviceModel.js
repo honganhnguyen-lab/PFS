@@ -105,4 +105,6 @@ serviceSchema.pre(/^find/, function (next) {
 
 const Service = mongoose.model("Service", serviceSchema);
 
+Service.createIndexes({ category: "text", search: "text" });
+
 module.exports = Service;

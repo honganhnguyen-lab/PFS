@@ -1,4 +1,5 @@
 const Service = require("../models/serviceModel");
+const User = require("./../models/userModel");
 const APIFeatures = require("./../utils/apiFeatures");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
@@ -79,10 +80,35 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
   res.json(apiResult.hits.hits);
 });
 
-exports.getAllService = catchAsync(async (req, res, next) => {
-  const services = await Service.find();
+exports.getAllServiceByCategories = catchAsync(async (req, res, next) => {
+  const { search } = req.query;
 
-  // SEND RESPONSE
+  const query = {};
+
+  if (search) {
+    const searchRegex = new RegExp(search, "i");
+    query.$or = [
+      { title: { $regex: searchRegex } },
+      { description: { $regex: searchRegex } }
+    ];
+  }
+
+  const services = await Service.aggregate([
+    { $match: query },
+    { $group: { _id: "$providerId", services: { $push: "$$ROOT" } } }
+  ]);
+
+  const providerIds = services.map((service) => service._id);
+
+  const returnServices = await User.find({ _id: { $in: providerIds } });
+
+  services.forEach((service) => {
+    const provider = returnServices.find(
+      (p) => p._id?.toString() === service._id?.toString()
+    );
+    service.provider = provider;
+  });
+
   res.status(200).json({
     status: "success",
     results: services.length,
@@ -156,15 +182,21 @@ exports.deleteService = catchAsync(async (req, res, next) => {
 });
 
 exports.getServiceByProvider = catchAsync(async (req, res, next) => {
-  const service = await Service.find({ providerId: req.params.id });
-  console.log("services", service, req.params.id);
+  const services = await Service.find({ providerId: req.params.id }).populate(
+    "providerId"
+  );
 
-  if (!service) {
+  if (!services) {
     return next(new AppError("No service found with that ID", 404));
   }
 
+  const provider = await User.findById(req.params.id);
+
   res.status(200).json({
     status: "success",
-    data: { service }
+    data: {
+      provider,
+      services
+    }
   });
 });

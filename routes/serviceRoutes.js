@@ -6,7 +6,7 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(serviceController.getAllService)
+  .get(serviceController.getAllServiceByCategories)
   .post(authController.protect, serviceController.createService);
 
 router.route("/elastic").get(serviceController.getAllServicesByElastic);
