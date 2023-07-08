@@ -10,6 +10,8 @@ router.get("/getAllTransaction", transaction.getListTransaction);
 router.get("/search", transaction.searchTransaction);
 router.post("/delete-transaction/:id", transaction.deleteTransaction);
 router.get("/info-transaction/:id", transaction.getOneTransactionId);
+router.get("/result-payment", transaction.getResultUrl);
+
 module.exports = router;
 
 function sortObject(obj) {

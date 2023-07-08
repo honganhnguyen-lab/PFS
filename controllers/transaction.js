@@ -5,7 +5,17 @@ const moment = require("moment");
 dotenv.config({ path: "./config.env" });
 const User = require("./../models/userModel");
 
-module.exports.create_payment_url = async (req, res, next) => {
+exports.getResultUrl = (req, res) => {
+  if (req.query.vnp_TransactionStatus === "00") {
+    res.render("template", { isSuccess: true });
+  } else {
+    res.render("template", { isSuccess: false });
+  }
+
+  res.status();
+};
+
+exports.create_payment_url = async (req, res, next) => {
   try {
     process.env.TZ = "Asia/Ho_Chi_Minh";
 
@@ -21,8 +31,7 @@ module.exports.create_payment_url = async (req, res, next) => {
     let tmnCode = "NAVP8HQ2";
     let secretKey = "CUNJHPWJUWLYJXQKUKITOAIGZTAOMHUT";
     let vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    let returnUrl =
-      "https://sandbox.vnpayment.vn/merchant_webapi/merchant.html";
+    let returnUrl = "http://localhost:4000/api/v1/transaction/result-payment";
     let orderId = moment(date).format("DDHHmmss");
     let amount = req.body.amount;
     let bankCode = req.body.bankCode;
@@ -111,6 +120,7 @@ module.exports.vnpay_ipn = async function (req, res) {
       }
     }
   } catch (RspCode) {
+    console.log(RspCode);
     res.status(200).json({ RspCode: "99", Message: "Unknow error" });
   }
 };
