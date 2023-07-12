@@ -13,10 +13,24 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
   const reqPrice = req.query.sortPrice;
   const reqCategory = Number(req.query.category);
   const reqDiscount = req.query.isDiscount;
+  const lat = req.query.lat;
+  const lon = req.query.lon;
 
   let queryBody = {
     size: 300,
     _source: true,
+    script_fields: {
+      distance: {
+        script: {
+          source:
+            "if (doc.containsKey('location')) { doc['location'].arcDistanceInKm(doc['location'].coordinates[0], doc['location'].coordinates[1]) } else { doc }",
+          params: {
+            lat: parseFloat(lat),
+            lon: parseFloat(lon)
+          }
+        }
+      }
+    },
     query: {
       bool: {
         should: [
@@ -40,6 +54,22 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
     ]
   };
 
+  if (isSortByLocation && lat && lon) {
+    queryBody.sort.push({
+      _geo_distance: {
+        coords: {
+          lat,
+          lon
+        },
+        order: "asc",
+        unit: "km",
+        mode: "min",
+        distance_type: "arc",
+        ignore_unmapped: true
+      }
+    });
+  }
+
   if (reqCategory) {
     queryBody.query.bool.filter = [
       {
@@ -58,30 +88,36 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
       }
     ];
   }
-  // if (isSortByLocation) {
-  //   queryBody.query.bool.filter = [
-  //     {
-  //       geo_distance: {
-  //         distance: 200km,
-  //         "pin.location": {
-  //           "lat": 40,
-  //           "lon": -70
-  //         }
-  //       }
-  //     }
-  //   ]
-  // }
 
   const apiResult = await esClient.search({
     index: "search-services",
     body: queryBody
   });
 
-  res.json(apiResult.hits.hits);
+  const formattedResults = apiResult.hits.hits.map((hit) => ({
+    ...hit._source,
+    distance: hit.fields.distance[0]
+  }));
+
+  res.json(formattedResults);
 });
 
 exports.getAllServiceByCategories = catchAsync(async (req, res, next) => {
   const { search } = req.query;
+
+  const { latlng } = req.params;
+  const [lat, lng] = latlng.split(",");
+
+  const multiplier = 0.001;
+
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        "Please provide latitutr and longitude in the format lat,lng.",
+        400
+      )
+    );
+  }
 
   const query = {};
 
@@ -94,6 +130,23 @@ exports.getAllServiceByCategories = catchAsync(async (req, res, next) => {
   }
 
   const services = await Service.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: "Point",
+          coordinates: [lng * 1, lat * 1]
+        },
+        distanceField: "distance",
+        distanceMultiplier: multiplier
+      }
+    },
+    {
+      $addFields: {
+        distance: {
+          $add: ["$distance", 0]
+        }
+      }
+    },
     { $match: query },
     { $group: { _id: "$providerId", services: { $push: "$$ROOT" } } }
   ]);
