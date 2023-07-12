@@ -9,6 +9,10 @@ router
   .get(serviceController.getAllServiceByCategories)
   .post(authController.protect, serviceController.createService);
 
+router
+  .route("/distances/:latlng")
+  .get(serviceController.getAllServiceByCategories);
+
 router.route("/elastic").get(serviceController.getAllServicesByElastic);
 
 router
