@@ -4,10 +4,9 @@ const authController = require("../controllers/authController");
 
 const router = express.Router();
 
-router
-  .route("/")
-  .get(serviceController.getAllServiceByCategories)
-  .post(authController.protect, serviceController.createService);
+// router.route("/top-3-outstanding").get(serviceController.aliasTopServices);
+
+router.route("/").post(authController.protect, serviceController.createService);
 
 router
   .route("/distances/:latlng")

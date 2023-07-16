@@ -19,18 +19,6 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
   let queryBody = {
     size: 300,
     _source: true,
-    script_fields: {
-      distance: {
-        script: {
-          source:
-            "if (doc.containsKey('location')) { doc['location'].arcDistanceInKm(doc['location'].coordinates[0], doc['location'].coordinates[1]) } else { doc }",
-          params: {
-            lat: parseFloat(lat),
-            lon: parseFloat(lon)
-          }
-        }
-      }
-    },
     query: {
       bool: {
         should: [
@@ -57,14 +45,13 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
   if (isSortByLocation && lat && lon) {
     queryBody.sort.push({
       _geo_distance: {
-        coords: {
-          lat,
-          lon
-        },
+        distance: "30mi",
+        coordinates: hit._source.location.coordinates, // Use hit._source.location.coordinates here
+        nested_path: "location",
         order: "asc",
         unit: "km",
         mode: "min",
-        distance_type: "arc",
+        distance_type: "plane",
         ignore_unmapped: true
       }
     });
@@ -94,10 +81,16 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
     body: queryBody
   });
 
-  const formattedResults = apiResult.hits.hits.map((hit) => ({
-    ...hit._source,
-    distance: hit.fields.distance[0]
-  }));
+  const formattedResults = apiResult.hits.hits.map((hit) => {
+    const coordinates = hit._source.location.coordinates;
+    const distance = hit.fields ? hit.fields["location.distance"] : null;
+    console.log("Coordinates:", coordinates);
+    console.log("Distance:", hit);
+    return {
+      ...hit._source,
+      distance: distance !== null ? distance[0] : 0
+    };
+  });
 
   res.json(formattedResults);
 });

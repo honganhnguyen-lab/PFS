@@ -2,13 +2,13 @@ const moment = require("moment");
 const mongoose = require("mongoose");
 
 const defineStatus = {
-  pending: 0,
-  confirm: 1,
-  reject: 2,
-  processing: 3,
-  done: 4
+  notPayYet: 0,
+  pending: 1,
+  confirm: 2,
+  reject: 3,
+  processing: 4,
+  done: 5
 };
-
 const appointmentSchema = new mongoose.Schema(
   {
     userId: {
@@ -34,7 +34,7 @@ const appointmentSchema = new mongoose.Schema(
     status: {
       type: Number,
       enum: Object.values(defineStatus),
-      default: defineStatus.pending
+      default: defineStatus.notPayYet
     },
     location: {
       type: {
@@ -42,13 +42,17 @@ const appointmentSchema = new mongoose.Schema(
         default: "Point",
         enum: ["Point"]
       },
-      coordinates: [Number]
+      coordinates: [Number],
+      address: String
     },
     appointmentDate: {
       type: String,
       required: [true, "An appointment must has date"]
     },
     appointmentStartTime: {
+      type: String
+    },
+    appointmentEndTime: {
       type: String
     },
     duration: {

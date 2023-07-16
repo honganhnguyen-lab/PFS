@@ -8,11 +8,13 @@ exports.createAppoinment = catchAsync(async (req, res, next) => {
   if (!newAppointment) {
     return next(new AppError("Add new service fail", 400));
   }
+  const newAppointmentId = newAppointment.id;
+  console.log(newAppointmentId);
 
   res.status(201).json({
     status: "success",
     data: {
-      newAppointment
+      newAppointmentId
     }
   });
 });

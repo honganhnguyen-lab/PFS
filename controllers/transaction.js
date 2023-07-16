@@ -4,10 +4,31 @@ const moment = require("moment");
 
 dotenv.config({ path: "./config.env" });
 const User = require("./../models/userModel");
+const { updateAppointment } = require("./appoinmentController");
+const Appointment = require("../models/appointmentModel");
 
-exports.getResultUrl = (req, res) => {
+const defineStatus = {
+  notPayYet: 0,
+  pending: 1,
+  confirm: 2,
+  reject: 3,
+  processing: 4,
+  done: 5
+};
+
+exports.getResultUrl = async (req, res) => {
   if (req.query.vnp_TransactionStatus === "00") {
     res.render("template", { isSuccess: true });
+    try {
+      const appointment = await Appointment.findByIdAndUpdate(
+        req.query.appointmentId,
+        { status: 1 }
+      );
+
+      console.log("Updated appointment:", appointment);
+    } catch (error) {
+      console.log("Error updating appointment status:", error);
+    }
   } else {
     res.render("template", { isSuccess: false });
   }
@@ -30,8 +51,9 @@ exports.create_payment_url = async (req, res, next) => {
 
     let tmnCode = "NAVP8HQ2";
     let secretKey = "CUNJHPWJUWLYJXQKUKITOAIGZTAOMHUT";
+    let appointmentId = req.body.appointmentId;
     let vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    let returnUrl = "http://localhost:4000/api/v1/transaction/result-payment";
+    let returnUrl = `http://localhost:4000/api/v1/transaction/result-payment?appointmentId=${appointmentId}`;
     let orderId = moment(date).format("DDHHmmss");
     let amount = req.body.amount;
     let bankCode = req.body.bankCode;
