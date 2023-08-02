@@ -39,15 +39,15 @@ const serviceSchema = new mongoose.Schema(
     },
     category: {
       type: Number,
-      required: [true, "A service must have a category"],
-      enum: {
-        values: [
-          defineCategory.cleanServices,
-          defineCategory.maidServices,
-          defineCategory.repairServices,
-          defineCategory.tutorServices
-        ]
-      }
+      required: [true, "A service must have a category"]
+      // enum: {
+      //   values: [
+      //     defineCategory.cleanServices,
+      //     defineCategory.maidServices,
+      //     defineCategory.repairServices,
+      //     defineCategory.tutorServices
+      //   ]
+      // }
     },
     ratingsAverage: {
       type: Number,
@@ -66,16 +66,16 @@ const serviceSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
-    location: {
-      type: {
-        type: String,
-        default: "Point",
-        enum: ["Point"]
-      },
-      coordinates: [Number],
-      address: String,
-      description: String
-    },
+    // location: {
+    //   type: {
+    //     type: String,
+    //     default: "Point",
+    //     enum: ["Point"]
+    //   },
+    //   coordinates: [Number],
+    //   address: String,
+    //   description: String
+    // },
     createdAt: {
       type: Date,
       default: Date.now(),

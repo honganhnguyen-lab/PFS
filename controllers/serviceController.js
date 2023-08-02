@@ -4,6 +4,7 @@ const APIFeatures = require("./../utils/apiFeatures");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 const esClient = require("../elasticSearch");
+const multer = require("multer");
 
 exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
   const reqTextSearch = req.query.search ? req.query.search : "";
@@ -178,15 +179,33 @@ exports.getService = catchAsync(async (req, res, next) => {
     }
   });
 });
-exports.createService = catchAsync(async (req, res, next) => {
-  const newService = (await Service.create({ ...req.body })).populate({
-    path: "providerId",
-    select: "-__v -passwordChangedAt"
-  });
 
-  if (!newService) {
-    return next(new AppError("Add new service fail", 400));
+exports.createService = catchAsync(async (req, res, next) => {
+  const { category, title, description, price, priceDiscount } = req.body;
+
+  // Create the new service with the form data
+  const newServiceData = {
+    category,
+    title,
+    description,
+    price,
+    priceDiscount
+  };
+
+  // If an image was uploaded, add its details to the new service data
+  if (req.file) {
+    newServiceData.image = {
+      filename: req.file.filename,
+      path: req.file.path
+      // Add other image details if needed (e.g., width, height, mime, etc.)
+    };
   }
+
+  // Create the new service with the updated data
+  const newService = await Service.create(newServiceData);
+  await newService
+    .populate({ path: "providerId", select: "-__v -passwordChangedAt" })
+    .execPopulate();
 
   res.status(201).json({
     status: "success",
