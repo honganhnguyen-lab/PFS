@@ -76,24 +76,24 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
       }
     ];
   }
+  try {
+    const apiResult = await esClient.search({
+      index: "search-services",
+      body: queryBody
+    });
 
-  const apiResult = await esClient.search({
-    index: "search-services",
-    body: queryBody
-  });
+    const formattedResults = apiResult.hits.hits.map((hit) => {
+      const distance = hit.fields ? hit.fields["location.distance"] : null;
+      return {
+        ...hit._source,
+        distance: distance !== null ? distance[0] : 0
+      };
+    });
 
-  const formattedResults = apiResult.hits.hits.map((hit) => {
-    const coordinates = hit._source.location.coordinates;
-    const distance = hit.fields ? hit.fields["location.distance"] : null;
-    console.log("Coordinates:", coordinates);
-    console.log("Distance:", hit);
-    return {
-      ...hit._source,
-      distance: distance !== null ? distance[0] : 0
-    };
-  });
-
-  res.json(formattedResults);
+    res.json(formattedResults);
+  } catch (err) {
+    console.log("err", err);
+  }
 });
 
 exports.getAllServiceByCategories = catchAsync(async (req, res, next) => {
