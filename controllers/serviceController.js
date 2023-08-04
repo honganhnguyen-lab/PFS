@@ -150,9 +150,7 @@ exports.getAllServiceByCategories = catchAsync(async (req, res, next) => {
   const returnServices = await User.find({ _id: { $in: providerIds } });
 
   services.forEach((service) => {
-    const provider = returnServices.find(
-      (p) => p._id?.toString() === service._id?.toString()
-    );
+    const provider = returnServices.find((p) => p._id === service._id);
     service.provider = provider;
   });
 
