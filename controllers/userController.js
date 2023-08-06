@@ -1,6 +1,10 @@
 const User = require("./../models/userModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+const fs = require("fs");
+const cloudinary = require("../cloudinary");
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
@@ -81,15 +85,58 @@ exports.createUser = (req, res) => {
     message: "This route is not yet defined!"
   });
 };
-exports.updateUser = (req, res) => {
-  res.status(500).json({
-    status: "error",
-    message: "This route is not yet defined!"
+exports.updateUser = catchAsync(async (req, res) => {
+  const userUpdate = await User.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
   });
-};
+
+  if (!userUpdate) {
+    return next(new AppError("No service found with that ID", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      user: userUpdate
+    }
+  });
+});
 exports.deleteUser = (req, res) => {
   res.status(500).json({
     status: "error",
     message: "This route is not yet defined!"
   });
 };
+
+exports.uploadAvatar = catchAsync(async (req, res) => {
+  const uploadFunction = multer({ dest: "uploads/" }).single("avatar");
+  uploadFunction(req, res, async function (err) {
+    if (err instanceof multer.MulterError) {
+      res.status(500).json({ message: "Something wrong happened" });
+    } else if (err) {
+      res.status(500).json({ message: err });
+    }
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      public_id: `${req.params.id}_avatar`,
+      width: 500,
+      height: 500,
+      crop: "fill"
+    });
+    const secureImageUrl = result.url?.replace(/^http:/i, "https:");
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { photo: secureImageUrl },
+      { new: true, runValidators: true }
+    );
+    console.log(result.url);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        avatarUrl: user.photo
+      }
+    });
+  });
+});

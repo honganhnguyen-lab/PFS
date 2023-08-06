@@ -1,4 +1,5 @@
 const Appointment = require("../models/appointmentModel");
+const User = require("../models/userModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 
@@ -9,7 +10,6 @@ exports.createAppoinment = catchAsync(async (req, res, next) => {
     return next(new AppError("Add new service fail", 400));
   }
   const newAppointmentId = newAppointment.id;
-  console.log(newAppointmentId);
 
   res.status(201).json({
     status: "success",
@@ -39,6 +39,14 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
       runValidators: true
     }
   );
+
+  if (req.body?.status && req.body.status === 2) {
+    const startTime = appointment?.appointmentStartTime;
+    const endTime = appointment?.appointmentEndTime;
+    const date = appointment?.appointmentDate;
+    const provider = appointment?.providerId;
+    console.log("appointment", startTime, endTime, date, provider);
+  }
 
   if (!appointment) {
     return next(new AppError("No service found with that ID", 404));
