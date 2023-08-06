@@ -123,7 +123,8 @@ exports.uploadAvatar = catchAsync(async (req, res) => {
       height: 500,
       crop: "fill"
     });
-    const secureImageUrl = result.url?.replace(/^http:/i, "https:");
+    const secureImageUrl =
+      result.url?.length > 0 ? result.url.replace(/^http:/i, "https:") : "";
 
     const user = await User.findByIdAndUpdate(
       req.params.id,
