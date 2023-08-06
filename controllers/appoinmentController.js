@@ -41,10 +41,10 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
   );
 
   if (req.body.status && req.body.status === 2) {
-    const startTime = appointment?.appointmentStartTime;
-    const endTime = appointment?.appointmentEndTime;
-    const date = appointment?.appointmentDate;
-    const provider = appointment?.providerId;
+    const startTime = appointment.appointmentStartTime;
+    const endTime = appointment.appointmentEndTime;
+    const date = appointment.appointmentDate;
+    const provider = appointment.providerId;
     console.log("appointment", startTime, endTime, date, provider);
   }
 
