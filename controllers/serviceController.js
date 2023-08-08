@@ -97,13 +97,24 @@ exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.getAllService = catchAsync(async (req, res, next) => {
+  const service = await Service.find();
+  res.status(200).json({
+    status: "success",
+    results: service.length,
+    data: {
+      service
+    }
+  });
+});
+
 exports.getAllServiceByCategories = catchAsync(async (req, res, next) => {
   const { search } = req.query;
 
   const { latlng } = req.params;
   const [lat, lng] = latlng.split(",");
 
-  const multiplier = 0.001;
+  const multiplier = 0.0001;
 
   if (!lat || !lng) {
     next(
@@ -124,7 +135,7 @@ exports.getAllServiceByCategories = catchAsync(async (req, res, next) => {
     ];
   }
 
-  const services = await Service.aggregate([
+  let services = await Service.aggregate([
     {
       $geoNear: {
         near: {
@@ -142,17 +153,17 @@ exports.getAllServiceByCategories = catchAsync(async (req, res, next) => {
         }
       }
     },
-    { $match: query },
-    { $group: { _id: "$providerId", services: { $push: "$$ROOT" } } }
+    { $match: query }
   ]);
+  const providerIds = services.map((service) => service.providerId);
 
-  const providerIds = services.map((service) => service._id);
+  const returnProviderDetail = await User.find({ _id: { $in: providerIds } });
 
-  const returnServices = await User.find({ _id: { $in: providerIds } });
-
-  services.forEach((service) => {
-    const provider = returnServices.find((p) => p._id === service._id);
-    service.provider = provider;
+  services = services.map((service) => {
+    const provider = returnProviderDetail.find(
+      (provider) => provider._id.toString() === service.providerId.toString()
+    );
+    return { ...service, provider };
   });
 
   res.status(200).json({
@@ -187,12 +198,9 @@ exports.createService = catchAsync(async (req, res, next) => {
     } else if (err) {
       res.status(500).json({ message: err });
     } else {
-      console.log("req.path", req.file.path);
-      console.log("req.body", req.body);
       const result = await cloudinary.uploader.upload(req.file.path, {
         public_id: `${req.body.title}_avatar`,
-        width: 500,
-        height: 500,
+
         crop: "fill"
       });
       const secureImageUrl =
@@ -217,9 +225,8 @@ exports.createService = catchAsync(async (req, res, next) => {
 });
 
 exports.updateService = catchAsync(async (req, res, next) => {
-  console.log("hello");
   const uploadFunction = multer({ dest: "services/" }).single("image");
-  console.log("hi");
+
   uploadFunction(req, res, async function (err) {
     if (err instanceof multer.MulterError) {
       console.log(err);
@@ -228,20 +235,17 @@ exports.updateService = catchAsync(async (req, res, next) => {
       console.log("return 2");
       res.status(500).json({ message: err });
     } else {
-      console.log("return 3");
-      console.log("req.path", req.file.path);
-
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        public_id: `${req.query.id}picture`,
-        width: 500,
-        height: 500,
-        crop: "fill"
-      });
-      const secureImageUrl =
-        result && result.url && result.url.length > 0
-          ? result.url.replace(/^http:/i, "https:")
-          : "";
-      req.body.picture = secureImageUrl;
+      if (req.file && req.file.path) {
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          public_id: `${req.params.id}picture`,
+          crop: "fill"
+        });
+        const secureImageUrl =
+          result && result.url && result.url.length > 0
+            ? result.url.replace(/^http:/i, "https:")
+            : "";
+        req.body.picture = secureImageUrl;
+      }
 
       const service = await Service.findByIdAndUpdate(req.params.id, req.body, {
         new: true,

@@ -14,6 +14,8 @@ router
   .route("/distances/:latlng")
   .get(serviceController.getAllServiceByCategories);
 
+router.route("").get(serviceController.getAllService);
+
 router.route("/").post(serviceController.createService);
 
 router.route("/elastic").get(serviceController.getAllServicesByElastic);

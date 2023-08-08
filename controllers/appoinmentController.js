@@ -74,7 +74,6 @@ exports.deleteAppointment = catchAsync(async (req, res, next) => {
 });
 
 exports.getAppointmentByProvider = catchAsync(async (req, res, next) => {
-  console.log("id", req.params.id);
   const appointment = await Appointment.find({ providerId: req.params.id });
 
   if (!appointment) {

@@ -95,7 +95,6 @@ appointmentSchema.pre("save", function (next) {
 appointmentSchema.pre(/^find/, async function (next) {
   const currentDate = moment().startOf("day");
   const appointmentDate = moment(this.getQuery().appointmentDate, "YYYY/MM/DD");
-  console.log(currentDate, appointmentDate);
   if (appointmentDate.isSame(currentDate, "day")) {
     try {
       await Appointment.updateMany(
