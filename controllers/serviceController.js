@@ -5,6 +5,7 @@ const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 const esClient = require("../elasticSearch");
 const multer = require("multer");
+const cloudinary = require("../cloudinary");
 
 exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
   const reqTextSearch = req.query.search ? req.query.search : "";
@@ -179,54 +180,84 @@ exports.getService = catchAsync(async (req, res, next) => {
 });
 
 exports.createService = catchAsync(async (req, res, next) => {
-  const { category, title, description, price, priceDiscount } = req.body;
+  const uploadFunction = multer({ dest: "services/" }).single("image");
+  uploadFunction(req, res, async function (err) {
+    if (err instanceof multer.MulterError) {
+      res.status(500).json({ message: "Something wrong happened" });
+    } else if (err) {
+      res.status(500).json({ message: err });
+    } else {
+      console.log("req.path", req.file.path);
+      console.log("req.body", req.body);
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        public_id: `${req.body.title}_avatar`,
+        width: 500,
+        height: 500,
+        crop: "fill"
+      });
+      const secureImageUrl =
+        result && result.url && result.url.length > 0
+          ? result.url.replace(/^http:/i, "https:")
+          : "";
+      req.body.picture = secureImageUrl;
 
-  // Create the new service with the form data
-  const newServiceData = {
-    category,
-    title,
-    description,
-    price,
-    priceDiscount
-  };
+      const newService = await Service.create(req.body);
+      await newService
+        .populate({ path: "providerId", select: "-__v -passwordChangedAt" })
+        .execPopulate();
 
-  // If an image was uploaded, add its details to the new service data
-  if (req.file) {
-    newServiceData.image = {
-      filename: req.file.filename,
-      path: req.file.path
-      // Add other image details if needed (e.g., width, height, mime, etc.)
-    };
-  }
-
-  // Create the new service with the updated data
-  const newService = await Service.create(newServiceData);
-  await newService
-    .populate({ path: "providerId", select: "-__v -passwordChangedAt" })
-    .execPopulate();
-
-  res.status(201).json({
-    status: "success",
-    data: {
-      service: newService
+      res.status(201).json({
+        status: "success",
+        data: {
+          service: newService
+        }
+      });
     }
   });
 });
 
 exports.updateService = catchAsync(async (req, res, next) => {
-  const service = await Service.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
-  });
+  console.log("hello");
+  const uploadFunction = multer({ dest: "services/" }).single("image");
+  console.log("hi");
+  uploadFunction(req, res, async function (err) {
+    if (err instanceof multer.MulterError) {
+      console.log(err);
+      res.status(500).json({ message: "Something wrong happened" });
+    } else if (err) {
+      console.log("return 2");
+      res.status(500).json({ message: err });
+    } else {
+      console.log("return 3");
+      console.log("req.path", req.file.path);
 
-  if (!service) {
-    return next(new AppError("No service found with that ID", 404));
-  }
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        public_id: `${req.query.id}picture`,
+        width: 500,
+        height: 500,
+        crop: "fill"
+      });
+      const secureImageUrl =
+        result && result.url && result.url.length > 0
+          ? result.url.replace(/^http:/i, "https:")
+          : "";
+      req.body.picture = secureImageUrl;
 
-  res.status(200).json({
-    status: "success",
-    data: {
-      service
+      const service = await Service.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        runValidators: true
+      });
+
+      if (!service) {
+        return next(new AppError("No service found with that ID", 404));
+      }
+
+      res.status(200).json({
+        status: "success",
+        data: {
+          service
+        }
+      });
     }
   });
 });
