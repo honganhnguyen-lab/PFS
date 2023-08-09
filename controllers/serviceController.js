@@ -282,8 +282,8 @@ exports.getRangeTime = catchAsync(async (req, res, next) => {
   const service = await Service.findById(req.params.id).populate("providerId");
   const providerId = service.providerId;
 
-  const timeRange = providerId?.timeRange;
-  const unavailableTime = providerId?.unavailableTime;
+  const timeRange = providerId ? providerId.timeRange : "";
+  const unavailableTime = providerId ? providerId.unavailableTime : [];
 
   const availableTimeRange = findAvailableTime(
     timeRange,
