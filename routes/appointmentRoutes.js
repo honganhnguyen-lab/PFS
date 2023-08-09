@@ -12,8 +12,8 @@ router
 router
   .route("/:id")
   .patch(
-    authController.protect,
-    authController.restrictTo("provider"),
+    // authController.protect,
+    // authController.restrictTo("provider"),
     AppointmentController.updateAppointment
   )
   .delete(

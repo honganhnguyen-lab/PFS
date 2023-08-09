@@ -6,6 +6,7 @@ const AppError = require("./../utils/appError");
 const esClient = require("../elasticSearch");
 const multer = require("multer");
 const cloudinary = require("../cloudinary");
+const moment = require("moment");
 
 exports.getAllServicesByElastic = catchAsync(async (req, res, next) => {
   const reqTextSearch = req.query.search ? req.query.search : "";
@@ -171,6 +172,129 @@ exports.getAllServiceByCategories = catchAsync(async (req, res, next) => {
     results: services.length,
     data: {
       services
+    }
+  });
+});
+
+// const findAvailableTime = (
+//   timeRange,
+//   unavailableTime,
+//   duration,
+//   dayAppointment
+// ) => {
+//   const [startTimeStr, endTimeStr] = timeRange.split("-");
+//   const startTime = moment(startTimeStr, "HH:mm");
+//   const endTime = moment(endTimeStr, "HH:mm");
+
+//   console.log("unavailableTime", unavailableTime);
+//   const unavailableSlots = unavailableTime
+//     .filter((slot) => moment(slot.day).isSame(dayAppointment, "day"))
+//     .map((slot) => {
+//       console.log("slot", slot.day);
+//       const [slotStartStr, slotEndStr] = slot.rangeTime.split("-");
+//       return {
+//         start: slotStartStr,
+//         end: slotEndStr
+//       };
+//     });
+
+//   console.log("unavailableSlots", unavailableSlots);
+
+//   const availableSlots = [];
+//   let currentTime = startTime.clone();
+
+//   while (currentTime.isSameOrBefore(endTime)) {
+//     const slotEnd = currentTime.clone().add(duration, "hours");
+//     let overlaps = false;
+
+//     for (const slot of unavailableSlots) {
+//       if (currentTime.isBefore(slot.end) && slotEnd.isAfter(slot.start)) {
+//         overlaps = true;
+//         break;
+//       }
+//     }
+
+//     if (!overlaps && slotEnd.isSameOrBefore(endTime)) {
+//       availableSlots.push({
+//         start: currentTime.format("HH:mm"),
+//         end: slotEnd.format("HH:mm")
+//       });
+//     }
+
+//     currentTime.add(30, "minutes");
+//   }
+//   console.log("availableSlots", availableSlots);
+
+//   return availableSlots;
+// };
+const findAvailableTime = (
+  timeRange,
+  unavailableTime,
+  duration,
+  dayAppointment
+) => {
+  const [startTimeStr, endTimeStr] = timeRange.split("-");
+  const startTime = moment(startTimeStr, "HH:mm");
+  const endTime = moment(endTimeStr, "HH:mm");
+
+  console.log("unavailableTime", unavailableTime);
+  const unavailableRanges = unavailableTime
+    .filter((slot) => moment(slot.day).isSame(dayAppointment, "day"))
+    .map((slot) => slot.rangeTime);
+
+  console.log("unavailableRanges", unavailableRanges);
+
+  const availableSlots = [];
+  let currentTime = startTime.clone();
+
+  while (currentTime.isSameOrBefore(endTime)) {
+    const slotEnd = currentTime.clone().add(duration, "hours");
+    let overlaps = false;
+
+    for (const range of unavailableRanges) {
+      const [rangeStartStr, rangeEndStr] = range.split("-");
+      const rangeStart = moment(rangeStartStr, "HH:mm");
+      const rangeEnd = moment(rangeEndStr, "HH:mm");
+
+      if (currentTime.isBefore(rangeEnd) && slotEnd.isAfter(rangeStart)) {
+        overlaps = true;
+        break;
+      }
+    }
+
+    if (!overlaps && slotEnd.isSameOrBefore(endTime)) {
+      availableSlots.push({
+        start: currentTime.format("HH:mm"),
+        end: slotEnd.format("HH:mm")
+      });
+    }
+
+    currentTime.add(30, "minutes");
+  }
+  console.log("availableSlots", availableSlots);
+
+  return availableSlots;
+};
+
+exports.getRangeTime = catchAsync(async (req, res, next) => {
+  const duration = req.body.duration;
+  const dayAppointment = req.body.currentDate;
+  const service = await Service.findById(req.params.id).populate("providerId");
+  const providerId = service.providerId;
+
+  const timeRange = providerId?.timeRange;
+  const unavailableTime = providerId?.unavailableTime;
+
+  const availableTimeRange = findAvailableTime(
+    timeRange,
+    unavailableTime,
+    duration,
+    dayAppointment
+  );
+  res.status(200).json({
+    status: "success",
+    data: {
+      availableTimeRange
     }
   });
 });

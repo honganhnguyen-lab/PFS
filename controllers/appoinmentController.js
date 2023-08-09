@@ -2,6 +2,7 @@ const Appointment = require("../models/appointmentModel");
 const User = require("../models/userModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
+const moment = require("moment");
 
 exports.createAppoinment = catchAsync(async (req, res, next) => {
   const newAppointment = await Appointment.create({ ...req.body });
@@ -31,8 +32,8 @@ exports.getAppointments = catchAsync(async (req, res, next) => {
 });
 
 exports.updateAppointment = catchAsync(async (req, res, next) => {
-  const appointment = await Appointment.findByIdAndUpdate(
-    req.params.id,
+  const appointment = await Appointment.findOneAndUpdate(
+    { _id: req.params.id },
     req.body,
     {
       new: true,
@@ -40,16 +41,23 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
     }
   );
 
+  if (!appointment) {
+    return next(new AppError("No service found with that ID", 404));
+  }
+
   if (req.body.status && req.body.status === 2) {
     const startTime = appointment.appointmentStartTime;
     const endTime = appointment.appointmentEndTime;
     const date = appointment.appointmentDate;
-    const provider = appointment.providerId;
-    console.log("appointment", startTime, endTime, date, provider);
-  }
 
-  if (!appointment) {
-    return next(new AppError("No service found with that ID", 404));
+    const unavailableTime = {
+      rangeTime: `${startTime}-${endTime}`,
+      day: date
+    };
+
+    await User.findByIdAndUpdate(appointment.providerId, {
+      $push: { unavailableTime: unavailableTime }
+    });
   }
 
   res.status(200).json({

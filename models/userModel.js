@@ -57,8 +57,9 @@ const userSchema = new mongoose.Schema(
     appointmentNumber: Number,
     description: String,
     weeklySchedule: String,
+    unavailableTime: Array,
     timeRange: String,
-    listAlreadyAvailableProviderTime: String,
+    listAlreadyAvailableProviderTime: Array,
     category: {
       type: Array,
       required: function () {
