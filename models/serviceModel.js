@@ -2,10 +2,12 @@ const mongoose = require("mongoose");
 const slugify = require("slugify");
 
 const defineCategory = {
-  repairServices: 0,
-  maidServices: 1,
-  cleanServices: 2,
-  tutorServices: 3
+  privateChef: 0,
+  cleanServices: 1,
+  repairAC: 2,
+  nannyServices: 3,
+  tutorServices: 4,
+  repairWifi: 5
 };
 
 const serviceSchema = new mongoose.Schema(
@@ -38,16 +40,7 @@ const serviceSchema = new mongoose.Schema(
       type: String
     },
     category: {
-      type: Number,
-      required: [true, "A service must have a category"]
-      // enum: {
-      //   values: [
-      //     defineCategory.cleanServices,
-      //     defineCategory.maidServices,
-      //     defineCategory.repairServices,
-      //     defineCategory.tutorServices
-      //   ]
-      // }
+      type: Number
     },
     ratingsAverage: {
       type: Number,
