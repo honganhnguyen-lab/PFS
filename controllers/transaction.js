@@ -17,6 +17,7 @@ const defineStatus = {
 };
 
 exports.getResultUrl = async (req, res) => {
+  console.log("is Error from here");
   if (req.query.vnp_TransactionStatus === "00") {
     res.render("template", { isSuccess: true });
     try {
@@ -53,7 +54,7 @@ exports.create_payment_url = async (req, res, next) => {
     let secretKey = "CUNJHPWJUWLYJXQKUKITOAIGZTAOMHUT";
     let appointmentId = req.body.appointmentId;
     let vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    let returnUrl = `http://localhost:4000/api/v1/transaction/result-payment?appointmentId=${appointmentId}`;
+    let returnUrl = `https://pfs.try0.xyz/api/v1/transaction/result-payment?appointmentId=${appointmentId}`;
     let orderId = moment(date).format("DDHHmmss");
     let amount = req.body.amount;
     let bankCode = req.body.bankCode;
