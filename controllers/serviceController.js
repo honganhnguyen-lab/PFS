@@ -186,7 +186,6 @@ const findAvailableTime = (
   const startTime = moment(startTimeStr, "HH:mm");
   const endTime = moment(endTimeStr, "HH:mm");
 
-  console.log("unavailableTime", unavailableTime);
   const unavailableRanges = unavailableTime
     .filter((slot) => moment(slot.day).isSame(dayAppointment, "day"))
     .map((slot) => slot.rangeTime);
