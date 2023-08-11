@@ -63,7 +63,6 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
 
   if (req.body.status && req.body.status === 5) {
     const totalAmount = await User.findById(appointment.providerId);
-    console.log("totalAmount", totalAmount, appointment.totalPrice);
     const updateTotalAmount =
       Number(totalAmount.totalAmount) + Number(appointment.totalPrice);
     console.log("updateTotalAmount", updateTotalAmount);
