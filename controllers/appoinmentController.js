@@ -66,7 +66,9 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
     const updateTotalAmount =
       Number(totalAmount.totalAmount) + Number(appointment.totalPrice);
 
-    const appointmentNumber = totalAmount.appointmentNumber ?? 0;
+    const appointmentNumber = totalAmount.appointmentNumber
+      ? totalAmount.appointmentNumber
+      : 0;
     await User.findByIdAndUpdate(appointment.providerId, {
       totalAmount: `${updateTotalAmount}`,
       appointmentNumber: appointmentNumber + 1
