@@ -5,6 +5,7 @@ const AppError = require("./../utils/appError");
 const moment = require("moment");
 
 exports.createAppoinment = catchAsync(async (req, res, next) => {
+  console.log("body", req.body);
   const newAppointment = await Appointment.create({ ...req.body });
 
   if (!newAppointment) {
@@ -60,6 +61,17 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
     });
   }
 
+  if (req.body.status && req.body.status === 5) {
+    const totalAmount = await User.findById(appointment.providerId);
+    console.log("totalAmount", totalAmount, appointment.totalPrice);
+    const updateTotalAmount =
+      Number(totalAmount.totalAmount) + Number(appointment.totalPrice);
+    console.log("updateTotalAmount", updateTotalAmount);
+
+    await User.findByIdAndUpdate(appointment.providerId, {
+      totalAmount: `${updateTotalAmount}`
+    });
+  }
   res.status(200).json({
     status: "success",
     data: {

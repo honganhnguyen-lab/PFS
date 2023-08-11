@@ -176,57 +176,6 @@ exports.getAllServiceByCategories = catchAsync(async (req, res, next) => {
   });
 });
 
-// const findAvailableTime = (
-//   timeRange,
-//   unavailableTime,
-//   duration,
-//   dayAppointment
-// ) => {
-//   const [startTimeStr, endTimeStr] = timeRange.split("-");
-//   const startTime = moment(startTimeStr, "HH:mm");
-//   const endTime = moment(endTimeStr, "HH:mm");
-
-//   console.log("unavailableTime", unavailableTime);
-//   const unavailableSlots = unavailableTime
-//     .filter((slot) => moment(slot.day).isSame(dayAppointment, "day"))
-//     .map((slot) => {
-//       console.log("slot", slot.day);
-//       const [slotStartStr, slotEndStr] = slot.rangeTime.split("-");
-//       return {
-//         start: slotStartStr,
-//         end: slotEndStr
-//       };
-//     });
-
-//   console.log("unavailableSlots", unavailableSlots);
-
-//   const availableSlots = [];
-//   let currentTime = startTime.clone();
-
-//   while (currentTime.isSameOrBefore(endTime)) {
-//     const slotEnd = currentTime.clone().add(duration, "hours");
-//     let overlaps = false;
-
-//     for (const slot of unavailableSlots) {
-//       if (currentTime.isBefore(slot.end) && slotEnd.isAfter(slot.start)) {
-//         overlaps = true;
-//         break;
-//       }
-//     }
-
-//     if (!overlaps && slotEnd.isSameOrBefore(endTime)) {
-//       availableSlots.push({
-//         start: currentTime.format("HH:mm"),
-//         end: slotEnd.format("HH:mm")
-//       });
-//     }
-
-//     currentTime.add(30, "minutes");
-//   }
-//   console.log("availableSlots", availableSlots);
-
-//   return availableSlots;
-// };
 const findAvailableTime = (
   timeRange,
   unavailableTime,
@@ -404,9 +353,11 @@ exports.deleteService = catchAsync(async (req, res, next) => {
 });
 
 exports.getServiceByProvider = catchAsync(async (req, res, next) => {
+  console.log("param", req.params.id);
   const services = await Service.find({ providerId: req.params.id }).populate(
     "providerId"
   );
+  console.log("services", services);
 
   if (!services) {
     return next(new AppError("No service found with that ID", 404));

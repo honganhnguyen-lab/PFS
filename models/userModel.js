@@ -60,6 +60,7 @@ const userSchema = new mongoose.Schema(
     unavailableTime: Array,
     timeRange: String,
     listAlreadyAvailableProviderTime: Array,
+    totalAmount: String,
     category: {
       type: Array,
       required: function () {

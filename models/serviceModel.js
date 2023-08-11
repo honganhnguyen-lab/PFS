@@ -59,6 +59,9 @@ const serviceSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    location: {
+      type: Object
+    },
     // location: {
     //   type: {
     //     type: String,
