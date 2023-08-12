@@ -32,6 +32,17 @@ exports.getAppointments = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getTotalAmountDuringSchedule = catchAsync(async (req, res, next) => {
+  const appointments = await Appointment.find();
+  res.status(200).json({
+    status: "success",
+    results: appointments.length,
+    data: {
+      appointments
+    }
+  });
+});
+
 exports.updateAppointment = catchAsync(async (req, res, next) => {
   const appointment = await Appointment.findOneAndUpdate(
     { _id: req.params.id },
@@ -55,6 +66,21 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
       rangeTime: `${startTime}-${endTime}`,
       day: date
     };
+    const userDetail = appointment.userId;
+    const serviceDetail = appointment.serviceId;
+    const updatedAt = appointment.updatedAt;
+    const providerDetail = appointment.providerId;
+    console.log("app", userDetail._id);
+    req.io.emit(`noti-appointment-success_${userDetail._id}`, {
+      content: {
+        title: serviceDetail.title,
+        updatedAt: Date.now(),
+        provider: `Appointment accepted`,
+        appointmentDate: appointment.appointmentDate,
+        appointmentStartTime: appointment.appointmentStartTime,
+        appointmentEndTime: appointment.appointmentEndTime
+      }
+    });
 
     await User.findByIdAndUpdate(appointment.providerId, {
       $push: { unavailableTime: unavailableTime }

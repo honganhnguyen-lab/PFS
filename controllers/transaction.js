@@ -89,6 +89,7 @@ exports.create_payment_url = async (req, res, next) => {
     let hmac = crypto.createHmac("sha512", secretKey);
     let signed = hmac.update(new Buffer(signData, "utf-8")).digest("hex");
     vnp_Params["vnp_SecureHash"] = signed;
+    console.log("vnp_Params", vnp_Params);
     vnpUrl += "?" + querystring.stringify(vnp_Params, { encode: false });
 
     res.send(vnpUrl);

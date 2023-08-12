@@ -14,6 +14,8 @@ const userRouter = require("./routes/userRoutes");
 const appointmentRouter = require("./routes/appointmentRoutes");
 const Transaction = require("./routes/Transaction");
 const app = express();
+const socketServer = require("http").createServer();
+const io = require("socket.io")(socketServer);
 
 app.use(helmet());
 
@@ -21,6 +23,21 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
+io.on("connection", (client) => {
+  client.on("event", (data) => {
+    /* … */
+    console.log(data);
+  });
+  client.on("disconnect", () => {
+    /* … */
+  });
+
+  client.emit(`customer`, 123);
+});
+
+socketServer.listen(process.env.SOCKET_PORT, () => {
+  console.log("Socket connect");
+});
 // const limiter = rateLimit({
 //   max: 200,
 //   windowMs: 60 * 60 * 12000,
@@ -51,6 +68,7 @@ app.use(express.static(`${__dirname}/public`));
 
 // Test middleware
 app.use((req, res, next) => {
+  req.io = io;
   req.requestTime = new Date().toISOString();
   next();
 });

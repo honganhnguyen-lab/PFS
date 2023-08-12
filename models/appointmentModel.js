@@ -76,6 +76,11 @@ const appointmentSchema = new mongoose.Schema(
     rating: {
       type: String
     },
+    updatedAt: {
+      type: Date,
+      default: Date.now(),
+      select: false
+    },
     userPoint: Number,
     providerPoint: Number
   },
