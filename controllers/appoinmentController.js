@@ -57,6 +57,39 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
     return next(new AppError("No service found with that ID", 404));
   }
 
+  const serviceDetail = appointment.serviceId;
+  const userDetail = appointment.userId;
+  const providerDetail = appointment.providerId;
+  const price = appointment.totalPrice;
+
+  if (req.body.status && req.body.status === 0) {
+    req.io.emit(`request_appointment_${userDetail._id}`, {
+      content: {
+        title: serviceDetail.title,
+        updatedAt: Date.now(),
+        provider: `Appointment created`
+      }
+    });
+  }
+
+  if (req.body.status && req.body.status === 1) {
+    req.io.emit(`request_appointment_${providerDetail._id}`, {
+      content: {
+        title: serviceDetail.title,
+        updatedAt: Date.now(),
+        provider: `Appointment requested`
+      }
+    });
+    req.io.emit(`request_appointment_${userDetail._id}`, {
+      content: {
+        title: serviceDetail.title,
+        updatedAt: Date.now(),
+        provider: `Payment success${
+          price ? price.toLocaleString() : 0
+        } VND, appointment requested `
+      }
+    });
+  }
   if (req.body.status && req.body.status === 2) {
     const startTime = appointment.appointmentStartTime;
     const endTime = appointment.appointmentEndTime;
@@ -66,24 +99,27 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
       rangeTime: `${startTime}-${endTime}`,
       day: date
     };
-    const userDetail = appointment.userId;
-    const serviceDetail = appointment.serviceId;
-    const updatedAt = appointment.updatedAt;
-    const providerDetail = appointment.providerId;
-    console.log("app", userDetail._id);
+
     req.io.emit(`noti-appointment-success_${userDetail._id}`, {
       content: {
         title: serviceDetail.title,
         updatedAt: Date.now(),
-        provider: `Appointment accepted`,
-        appointmentDate: appointment.appointmentDate,
-        appointmentStartTime: appointment.appointmentStartTime,
-        appointmentEndTime: appointment.appointmentEndTime
+        provider: `Appointment accepted`
       }
     });
 
     await User.findByIdAndUpdate(appointment.providerId, {
       $push: { unavailableTime: unavailableTime }
+    });
+  }
+
+  if (req.body.status && req.body.status === 3) {
+    req.io.emit(`noti-appointment-decline_${userDetail._id}`, {
+      content: {
+        title: serviceDetail.title,
+        updatedAt: Date.now(),
+        provider: `Appointment declined, ${appointment.totalPrice.toLocaleString()}VND returned to your bank account`
+      }
     });
   }
 
@@ -98,6 +134,20 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
     await User.findByIdAndUpdate(appointment.providerId, {
       totalAmount: `${updateTotalAmount}`,
       appointmentNumber: appointmentNumber + 1
+    });
+    req.io.emit(`noti-appointment-finish_${userDetail._id}`, {
+      content: {
+        title: serviceDetail.title,
+        updatedAt: Date.now(),
+        provider: `Appointment finish`
+      }
+    });
+    req.io.emit(`noti-appointment-finish_${providerDetail._id}`, {
+      content: {
+        title: serviceDetail.title,
+        updatedAt: Date.now(),
+        provider: `Appointment finish`
+      }
     });
   }
   res.status(200).json({

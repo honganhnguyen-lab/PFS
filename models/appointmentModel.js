@@ -55,6 +55,9 @@ const appointmentSchema = new mongoose.Schema(
     appointmentEndTime: {
       type: String
     },
+    paymentMethod: {
+      type: String
+    },
     duration: {
       type: String
     },
