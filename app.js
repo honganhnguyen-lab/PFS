@@ -6,6 +6,8 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const hpp = require("hpp");
 const ejs = require("ejs");
+const cors = require("cors");
+const https = require("https");
 
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
@@ -14,7 +16,7 @@ const userRouter = require("./routes/userRoutes");
 const appointmentRouter = require("./routes/appointmentRoutes");
 const Transaction = require("./routes/Transaction");
 const app = express();
-const socketServer = require("http").createServer();
+const socketServer = https.createServer();
 const io = require("socket.io")(socketServer);
 
 app.use(helmet());
@@ -50,6 +52,8 @@ app.use(express.json({ limit: "10kb" }));
 app.use(mongoSanitize());
 
 app.use(xss());
+
+app.use(cors());
 
 app.use(
   hpp({
