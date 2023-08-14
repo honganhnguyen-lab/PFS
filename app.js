@@ -7,7 +7,7 @@ const xss = require("xss-clean");
 const hpp = require("hpp");
 const ejs = require("ejs");
 const cors = require("cors");
-const https = require("https");
+const http = require("http");
 
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
@@ -17,7 +17,7 @@ const appointmentRouter = require("./routes/appointmentRoutes");
 const Transaction = require("./routes/Transaction");
 const app = express();
 
-const socketServer = https.createServer(app);
+const socketServer = http.createServer();
 const io = require("socket.io")(socketServer);
 
 app.use(helmet());
