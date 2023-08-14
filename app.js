@@ -8,6 +8,7 @@ const hpp = require("hpp");
 const ejs = require("ejs");
 const cors = require("cors");
 const https = require("https");
+const fs = require("fs");
 
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
