@@ -99,6 +99,7 @@ exports.updateAppointment = catchAsync(async (req, res, next) => {
       rangeTime: `${startTime}-${endTime}`,
       day: date
     };
+    console.log('hello')
 
     req.io.emit(`noti-appointment-success_${userDetail._id}`, {
       content: {
