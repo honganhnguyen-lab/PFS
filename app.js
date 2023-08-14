@@ -8,7 +8,6 @@ const hpp = require("hpp");
 const ejs = require("ejs");
 const cors = require("cors");
 const https = require("https");
-const fs = require("fs");
 
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
@@ -18,11 +17,7 @@ const appointmentRouter = require("./routes/appointmentRoutes");
 const Transaction = require("./routes/Transaction");
 const app = express();
 
-const options = {
-  key: fs.readFileSync("/path/to/private/key.pem"),
-  cert: fs.readFileSync("/path/to/certificate.pem")
-};
-const socketServer = https.createServer(options, app);
+const socketServer = https.createServer(app);
 const io = require("socket.io")(socketServer);
 
 app.use(helmet());
