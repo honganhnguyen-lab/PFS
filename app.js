@@ -16,7 +16,12 @@ const userRouter = require("./routes/userRoutes");
 const appointmentRouter = require("./routes/appointmentRoutes");
 const Transaction = require("./routes/Transaction");
 const app = express();
-const socketServer = https.createServer();
+
+const options = {
+  key: fs.readFileSync("/path/to/private/key.pem"),
+  cert: fs.readFileSync("/path/to/certificate.pem")
+};
+const socketServer = https.createServer(options, app);
 const io = require("socket.io")(socketServer);
 
 app.use(helmet());
@@ -28,7 +33,7 @@ if (process.env.NODE_ENV === "development") {
 io.on("connection", (client) => {
   client.on("event", (data) => {
     /* … */
-    console.log(data);
+    console.log("jjj", data);
   });
   client.on("disconnect", () => {
     /* … */
@@ -40,6 +45,7 @@ io.on("connection", (client) => {
 socketServer.listen(process.env.SOCKET_PORT, () => {
   console.log("Socket connect");
 });
+
 // const limiter = rateLimit({
 //   max: 200,
 //   windowMs: 60 * 60 * 12000,
